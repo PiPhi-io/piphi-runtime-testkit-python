@@ -1,0 +1,31 @@
+[project]
+name = "piphi-runtime-testkit-python"
+version = "0.1.0"
+description = "Pytest-first helpers for testing PiPhi runtime integrations"
+authors = [
+    {name = "KelvinSan", email = "support@piphi.network"},
+]
+dependencies = ["pytest>=8.3,<9.0"]
+requires-python = ">=3.11"
+readme = "README.md"
+license = {text = "MIT"}
+
+[project.entry-points.pytest11]
+piphi_runtime_testkit_python = "piphi_runtime_testkit_python.pytest_plugin"
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+
+[tool.pdm]
+distribution = true
+
+[dependency-groups]
+dev = [
+    "fastapi>=0.115,<1.0",
+    "httpx>=0.27,<1.0",
+    "piphi-runtime-kit-python[fastapi] @ file:///${PROJECT_ROOT}/../piphi-runtime-kit-python",
+    "pytest>=8.3,<9.0",
+    "pytest-asyncio>=0.24,<1.0",
+]
