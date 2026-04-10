@@ -11,6 +11,8 @@ It is intentionally small. The goal is not to hide pytest or hide your runtime.
 The goal is to give you a few strong building blocks so your tests feel
 predictable instead of repetitive.
 
+> Safety note: the IDs and tokens in this README are fake test values. Use placeholders like `test-token` in tests, and never paste real production credentials into fixtures, screenshots, or public docs.
+
 ## Start Here
 
 If you are brand new, read these sections in order:
@@ -80,7 +82,7 @@ def test_runtime_sent_telemetry(mock_core):
 
 PiPhi runtimes use headers like `X-Container-Id` and
 `X-PiPhi-Integration-Token` to identify themselves when communicating with
-Core.
+Core. In tests, use fake values rather than real runtime credentials.
 
 The `runtime_headers` fixture and `build_runtime_headers(...)` helper build
 those headers for you so you do not need to remember the exact names every
@@ -90,10 +92,10 @@ Example:
 
 ```python
 def test_headers(runtime_headers):
-    headers = runtime_headers(container_id="runtime-123", internal_token="secret")
+    headers = runtime_headers(container_id="runtime-123", internal_token="test-token")
 
     assert headers["X-Container-Id"] == "runtime-123"
-    assert headers["X-PiPhi-Integration-Token"] == "secret"
+    assert headers["X-PiPhi-Integration-Token"] == "test-token"
 ```
 
 ### Config Payload
@@ -305,10 +307,10 @@ Example:
 
 ```python
 def test_runtime_headers(runtime_headers):
-    headers = runtime_headers(container_id="runtime-123", internal_token="secret")
+    headers = runtime_headers(container_id="runtime-123", internal_token="test-token")
 
     assert headers["X-Container-Id"] == "runtime-123"
-    assert headers["X-PiPhi-Integration-Token"] == "secret"
+    assert headers["X-PiPhi-Integration-Token"] == "test-token"
 ```
 
 ### `config_payload`
@@ -384,7 +386,7 @@ from piphi_runtime_testkit_python import build_runtime_headers
 
 headers = build_runtime_headers(
     container_id="runtime-123",
-    internal_token="secret-token",
+    internal_token="test-token",
     extra_headers={"X-Debug-Mode": "true"},
 )
 ```
@@ -638,7 +640,7 @@ perform the `POST` and the test will assert what the mock Core captured.
 ## FastAPI End-to-End Example
 
 The strongest example in this package is a real FastAPI round-trip test in
-[tests/test_fastapi_runtime_example.py](/home/kelvinfor3xzorin/Documents/PiPhi/piphi-runtime-testkit-python/tests/test_fastapi_runtime_example.py).
+[`tests/test_fastapi_runtime_example.py`](./tests/test_fastapi_runtime_example.py).
 
 That test does all of these things:
 
@@ -660,7 +662,7 @@ payload = config_payload(
 )
 headers = runtime_headers(
     container_id="runtime-123",
-    internal_token="secret-token",
+    internal_token="test-token",
 )
 
 client.post("/config", json=payload, headers=headers)
@@ -791,7 +793,7 @@ Fix:
 
 - wait for delivery to complete before asserting
 - use a polling helper like the `wait_for(...)` function in
-  [tests/test_fastapi_runtime_example.py](/home/kelvinfor3xzorin/Documents/PiPhi/piphi-runtime-testkit-python/tests/test_fastapi_runtime_example.py)
+  [`tests/test_fastapi_runtime_example.py`](./tests/test_fastapi_runtime_example.py)
 
 ## Troubleshooting
 
