@@ -17,6 +17,7 @@ from piphi_runtime_kit_python import (
     schedule_telemetry_delivery,
 )
 from piphi_runtime_kit_python.fastapi import sync_runtime_auth_from_fastapi_payload
+from piphi_runtime_testkit_python import assert_entities_response
 
 
 class DemoConfig(RuntimeConfig):
@@ -111,6 +112,37 @@ def create_demo_app(*, core_base_url: str) -> tuple[FastAPI, Any]:
             "state_snapshots": starter.registry.state_snapshots,
         }
 
+    @app.get("/entities")
+    async def entities():
+        entry = starter.registry.primary_entry()
+        if entry is None:
+            return {"entities": [], "capabilities": {}, "commands": {}}
+
+        return {
+            "entities": [
+                {
+                    "id": f"sensor.{entry['device_id']}",
+                    "name": f"Demo Sensor {entry['device_id']}",
+                    "capabilities": ["temperature", "humidity"],
+                    "config_id": str(entry["config_id"]),
+                    "device_id": str(entry["device_id"]),
+                    "device_type": "sensor",
+                    "device_class": "environment",
+                    "entity_type": "sensor",
+                    "dashboard": {
+                        "allowed_widgets": ["sensor-card", "line-chart"],
+                        "default_widget": "sensor-card",
+                        "recommended_widgets": ["sensor-card"],
+                    },
+                }
+            ],
+            "capabilities": {
+                "temperature": {"label": "Temperature"},
+                "humidity": {"label": "Humidity"},
+            },
+            "commands": {},
+        }
+
     return app, starter
 
 
@@ -170,3 +202,26 @@ def test_fastapi_runtime_example_round_trip(mock_core, runtime_headers, config_p
         assert event_headers["x-piphi-integration-token"] == "secret-token"
         assert telemetry_request.json_body["device_id"] == "sensor-1"
         assert (event_request.json_body.get("event_type") or event_request.json_body.get("type")) == "device.configured"
+
+
+def test_fastapi_runtime_example_entities_endpoint(mock_core, runtime_headers, config_payload):
+    app, _starter = create_demo_app(core_base_url=mock_core.base_url)
+    with TestClient(app) as client:
+        payload = config_payload(
+            config_id="sensor-entities-1",
+            container_id="runtime-entities-123",
+            extra={"host": "127.0.0.10"},
+        )
+        headers = runtime_headers(container_id="runtime-entities-123", internal_token="secret-token")
+
+        config_response = client.post("/config", json=payload, headers=headers)
+        assert config_response.status_code == 200
+
+        entities_response = client.get("/entities")
+        assert entities_response.status_code == 200
+
+        entities_json = entities_response.json()
+        assert_entities_response(entities_json)
+        assert entities_json["entities"][0]["config_id"] == "sensor-entities-1"
+        assert entities_json["entities"][0]["device_type"] == "sensor"
+        assert entities_json["entities"][0]["dashboard"]["default_widget"] == "sensor-card"

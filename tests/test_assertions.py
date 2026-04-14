@@ -2,7 +2,11 @@ from __future__ import annotations
 
 import pytest
 
-from piphi_runtime_testkit_python.assertions import assert_event_sent, assert_telemetry_sent
+from piphi_runtime_testkit_python.assertions import (
+    assert_entities_response,
+    assert_event_sent,
+    assert_telemetry_sent,
+)
 from piphi_runtime_testkit_python.mock_core import CapturedRequest, MockCoreServer
 
 
@@ -109,3 +113,68 @@ def test_assert_event_sent_without_requests_fails_cleanly():
         assert "no event requests were captured" in str(excinfo.value)
     finally:
         mock_core.shutdown()
+
+
+def test_assert_entities_response_accepts_minimal_payload():
+    payload = {
+        "entities": [
+            {
+                "id": "switch.plug_1",
+                "name": "Kitchen Plug",
+                "capabilities": ["switch", "power"],
+            }
+        ]
+    }
+
+    result = assert_entities_response(payload)
+
+    assert result["entities"][0]["id"] == "switch.plug_1"
+
+
+def test_assert_entities_response_accepts_richer_entity_aliases_and_dashboard_hints():
+    payload = {
+        "entities": [
+            {
+                "id": "light.bulb_1",
+                "name": "Desk Lamp",
+                "capabilities": ["switch", "brightness"],
+                "configId": "config-1",
+                "deviceId": "device-1",
+                "deviceType": "bulb",
+                "deviceClass": "lighting",
+                "entityType": "light",
+                "dashboard": {
+                    "allowedWidgets": ["light-card", "tile"],
+                    "defaultWidget": "light-card",
+                    "recommendedWidgets": ["light-card"],
+                },
+            }
+        ],
+        "capabilities": {
+            "brightness": {"label": "Brightness"},
+        },
+        "commands": {
+            "turn_on": {"label": "Turn on"},
+        },
+    }
+
+    result = assert_entities_response(payload)
+
+    assert result["entities"][0]["dashboard"]["defaultWidget"] == "light-card"
+
+
+def test_assert_entities_response_rejects_invalid_entity_shape():
+    payload = {
+        "entities": [
+            {
+                "id": "switch.plug_1",
+                "name": "Kitchen Plug",
+                "capabilities": "switch",
+            }
+        ]
+    }
+
+    with pytest.raises(AssertionError) as excinfo:
+        assert_entities_response(payload)
+
+    assert "capabilities" in str(excinfo.value)
