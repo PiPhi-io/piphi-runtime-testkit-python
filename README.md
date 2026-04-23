@@ -189,6 +189,12 @@ That makes the test much easier to understand at a glance.
 
 ## Install
 
+### Install from PyPI
+
+```bash
+pip install piphi-runtime-testkit-python
+```
+
 ### Local development install
 
 If you are working from sibling repositories locally:
@@ -210,6 +216,14 @@ project will also usually need:
 - `httpx`
 
 Example:
+
+```bash
+pip install piphi-runtime-testkit-python
+pip install piphi-runtime-kit-python
+pip install fastapi httpx
+```
+
+Or with sibling repositories during local development:
 
 ```bash
 pdm add -d /path/to/piphi-runtime-testkit-python
@@ -873,3 +887,61 @@ This project is trying to stay:
 
 The goal is not to create a giant testing framework. The goal is to make the
 common PiPhi runtime testing tasks pleasant and obvious.
+
+## Releasing To PyPI
+
+This repository includes a manual GitHub Actions release workflow at
+[`release-pypi.yml`](./.github/workflows/release-pypi.yml) so you do not have to
+manually bump the package version or run `twine upload` from your laptop every
+time.
+
+Before the first automated release:
+
+- configure a Trusted Publisher on TestPyPI for this repository, workflow file
+  `.github/workflows/release-pypi.yml`, and environment `testpypi`
+- configure a Trusted Publisher on PyPI for this repository, workflow file
+  `.github/workflows/release-pypi.yml`, and environment `pypi`
+- if this is the first ever upload, create a pending publisher on PyPI/TestPyPI
+  so the workflow can create the project on first publish
+- make sure your branch protection rules allow `GITHUB_TOKEN` to push the
+  version bump commit and tag back to the default branch
+
+Recommended flow:
+
+1. merge your changes to the default branch
+2. run `Testkit Package Check`
+3. run `Release Testkit Package` with `target_repository=testpypi` for a
+   rehearsal or prerelease
+4. run `Release Testkit Package` with `target_repository=pypi` for the real
+   release
+
+What the workflow does:
+
+- checks that the run started from the default branch
+- installs the dev environment and runs `pytest -q`
+- computes the next semantic version with `scripts/release.py`
+- builds and validates the distribution artifacts
+- publishes to TestPyPI or PyPI using Trusted Publishing
+- for real PyPI releases, commits `pyproject.toml`, tags `v<version>`, and
+  creates a GitHub release
+
+The `release_type` input supports:
+
+- `patch`, `minor`, `major` for stable releases
+- `prepatch`, `preminor`, `premajor`, `prerelease` for prereleases like
+  `0.1.1-alpha.1`
+- `release` to promote a prerelease like `0.2.0-rc.1` to `0.2.0`
+- `custom` when you need to set an explicit semantic version
+
+Manual upload still works if you need it:
+
+```bash
+pdm build
+pdm run twine check dist/*
+pdm run twine upload dist/*
+```
+
+## Versioning And Release Notes
+
+See [VERSIONING.md](./VERSIONING.md) for semver guidance and [CHANGELOG.md](./CHANGELOG.md)
+for published release notes.
