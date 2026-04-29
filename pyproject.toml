@@ -1,6 +1,6 @@
 [project]
 name = "piphi-runtime-testkit-python"
-version = "0.1.2"
+version = "0.1.3"
 description = "Pytest-first helpers for testing PiPhi runtime integrations"
 authors = [
     {name = "KelvinSan", email = "support@piphi.network"},
