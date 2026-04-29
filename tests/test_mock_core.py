@@ -4,7 +4,13 @@ import json
 from urllib import error
 from urllib import request
 
-from piphi_runtime_testkit_python.mock_core import EVENT_PATH, TELEMETRY_PATH, MockCoreServer
+from piphi_runtime_testkit_python import build_core_config_row, build_runtime_headers
+from piphi_runtime_testkit_python.mock_core import (
+    EVENT_PATH,
+    RUNTIME_CONFIG_FETCH_PATH,
+    TELEMETRY_PATH,
+    MockCoreServer,
+)
 
 
 def _post_json(url: str, payload: dict) -> tuple[int, dict]:
@@ -14,6 +20,16 @@ def _post_json(url: str, payload: dict) -> tuple[int, dict]:
         data=encoded,
         headers={"Content-Type": "application/json"},
         method="POST",
+    )
+    with request.urlopen(req) as response:  # noqa: S310
+        return response.status, json.loads(response.read().decode("utf-8"))
+
+
+def _get_json(url: str, headers: dict[str, str] | None = None) -> tuple[int, list]:
+    req = request.Request(
+        url,
+        headers=headers or {},
+        method="GET",
     )
     with request.urlopen(req) as response:  # noqa: S310
         return response.status, json.loads(response.read().decode("utf-8"))
@@ -168,5 +184,42 @@ def test_mock_core_invalid_json_is_captured_with_none_json_body():
         assert len(mock_core.telemetry_requests) == 1
         assert mock_core.telemetry_requests[0].json_body is None
         assert mock_core.telemetry_requests[0].body == b"{invalid-json"
+    finally:
+        mock_core.shutdown()
+
+
+def test_mock_core_serves_runtime_config_rows_and_captures_auth_headers():
+    mock_core = MockCoreServer()
+    try:
+        mock_core.set_runtime_config_rows(
+            [
+                build_core_config_row(
+                    config_id="config-1",
+                    container_id="runtime-123",
+                    integration_id="test-integration",
+                    config_data={"host": "10.0.0.10"},
+                )
+            ]
+        )
+        headers = build_runtime_headers(
+            container_id="runtime-123",
+            internal_token="secret-token",
+        )
+
+        status, rows = _get_json(
+            f"{mock_core.base_url}{RUNTIME_CONFIG_FETCH_PATH}?container_id=runtime-123",
+            headers=headers,
+        )
+
+        assert status == 200
+        assert rows[0]["config_data"]["id"] == "config-1"
+        assert rows[0]["config_data"]["host"] == "10.0.0.10"
+        assert len(mock_core.runtime_config_requests) == 1
+        captured_headers = {
+            key.lower(): value
+            for key, value in mock_core.runtime_config_requests[0].headers.items()
+        }
+        assert captured_headers["x-container-id"] == "runtime-123"
+        assert captured_headers["x-piphi-integration-token"] == "secret-token"
     finally:
         mock_core.shutdown()

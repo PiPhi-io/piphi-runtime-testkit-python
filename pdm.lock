@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:110ab9e1e3387cd0bc20dc235ed062d1eaeab3ce8f800223b2acf5dd8e06ad97"
+content_hash = "sha256:17217f977cbc9fd97712003074cb69a62e7cd7c0198ed1ec1e2029984cb20faa"
 
 [[metadata.targets]]
 requires_python = ">=3.11"
@@ -601,7 +601,7 @@ files = [
 
 [[package]]
 name = "piphi-runtime-kit-python"
-version = "0.4.2"
+version = "0.4.5"
 requires_python = ">=3.11"
 summary = "PiPhi Network runtime integration helpers"
 groups = ["dev"]
@@ -610,24 +610,24 @@ dependencies = [
     "pydantic<3.0,>=2.8",
 ]
 files = [
-    {file = "piphi_runtime_kit_python-0.4.2-py3-none-any.whl", hash = "sha256:5417c762cf484026a4079d4bb1fa6d2887c5770ef09543b659eedad823d42133"},
-    {file = "piphi_runtime_kit_python-0.4.2.tar.gz", hash = "sha256:4697c79ec1837b70810b834203d12e4b10ccf9732d5db7ca2ed5d75705d7b896"},
+    {file = "piphi_runtime_kit_python-0.4.5-py3-none-any.whl", hash = "sha256:153d7441c81d67703d57287435b3a55a04df987311bb68f3a73ac182dceba1e3"},
+    {file = "piphi_runtime_kit_python-0.4.5.tar.gz", hash = "sha256:123a569a343f4fbdc6008afb91cea8d5bb0a941d52095cfa20b6860e76862b55"},
 ]
 
 [[package]]
 name = "piphi-runtime-kit-python"
-version = "0.4.2"
+version = "0.4.5"
 extras = ["fastapi"]
 requires_python = ">=3.11"
 summary = "PiPhi Network runtime integration helpers"
 groups = ["dev"]
 dependencies = [
     "fastapi<1.0,>=0.115",
-    "piphi-runtime-kit-python==0.4.2",
+    "piphi-runtime-kit-python==0.4.5",
 ]
 files = [
-    {file = "piphi_runtime_kit_python-0.4.2-py3-none-any.whl", hash = "sha256:5417c762cf484026a4079d4bb1fa6d2887c5770ef09543b659eedad823d42133"},
-    {file = "piphi_runtime_kit_python-0.4.2.tar.gz", hash = "sha256:4697c79ec1837b70810b834203d12e4b10ccf9732d5db7ca2ed5d75705d7b896"},
+    {file = "piphi_runtime_kit_python-0.4.5-py3-none-any.whl", hash = "sha256:153d7441c81d67703d57287435b3a55a04df987311bb68f3a73ac182dceba1e3"},
+    {file = "piphi_runtime_kit_python-0.4.5.tar.gz", hash = "sha256:123a569a343f4fbdc6008afb91cea8d5bb0a941d52095cfa20b6860e76862b55"},
 ]
 
 [[package]]

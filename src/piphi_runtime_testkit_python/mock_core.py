@@ -9,6 +9,7 @@ from typing import Any
 
 TELEMETRY_PATH = "/api/v2/integrations/telemetry"
 EVENT_PATH = "/api/v2/events/ingest"
+RUNTIME_CONFIG_FETCH_PATH = "/api/v2/integrations/config/fetch/all/by/container/internal"
 
 
 @dataclass(slots=True)
@@ -24,22 +25,47 @@ class _RequestStore:
     def __init__(self) -> None:
         self.telemetry_requests: list[CapturedRequest] = []
         self.event_requests: list[CapturedRequest] = []
+        self.runtime_config_requests: list[CapturedRequest] = []
         self.telemetry_status = 200
         self.event_status = 200
+        self.runtime_config_status = 200
         self.telemetry_json: Any = {"ok": True}
         self.event_json: Any = {"ok": True}
+        self.runtime_config_json: Any = []
 
     def reset(self) -> None:
         self.telemetry_requests.clear()
         self.event_requests.clear()
+        self.runtime_config_requests.clear()
         self.telemetry_status = 200
         self.event_status = 200
+        self.runtime_config_status = 200
         self.telemetry_json = {"ok": True}
         self.event_json = {"ok": True}
+        self.runtime_config_json = []
 
 
 class _MockCoreRequestHandler(BaseHTTPRequestHandler):
     store: _RequestStore
+
+    def do_GET(self) -> None:  # noqa: N802
+        request = CapturedRequest(
+            method="GET",
+            path=self.path,
+            headers={key: value for key, value in self.headers.items()},
+            body=b"",
+            json_body=None,
+        )
+
+        if self.path.split("?", 1)[0] == RUNTIME_CONFIG_FETCH_PATH:
+            self.store.runtime_config_requests.append(request)
+            self._send_json(
+                self.store.runtime_config_status,
+                self.store.runtime_config_json,
+            )
+            return
+
+        self._send_json(404, {"ok": False, "detail": "unknown path"})
 
     def do_POST(self) -> None:  # noqa: N802
         content_length = int(self.headers.get("Content-Length", "0"))
@@ -119,6 +145,10 @@ class MockCoreServer:
     def event_requests(self) -> list[CapturedRequest]:
         return self._store.event_requests
 
+    @property
+    def runtime_config_requests(self) -> list[CapturedRequest]:
+        return self._store.runtime_config_requests
+
     def set_telemetry_response(self, *, status_code: int = 200, json_body: Any = None) -> None:
         self._store.telemetry_status = status_code
         self._store.telemetry_json = {"ok": status_code < 400} if json_body is None else json_body
@@ -126,6 +156,13 @@ class MockCoreServer:
     def set_event_response(self, *, status_code: int = 200, json_body: Any = None) -> None:
         self._store.event_status = status_code
         self._store.event_json = {"ok": status_code < 400} if json_body is None else json_body
+
+    def set_runtime_config_response(self, *, status_code: int = 200, json_body: Any = None) -> None:
+        self._store.runtime_config_status = status_code
+        self._store.runtime_config_json = [] if json_body is None else json_body
+
+    def set_runtime_config_rows(self, rows: list[dict[str, Any]]) -> None:
+        self.set_runtime_config_response(status_code=200, json_body=rows)
 
     def reset(self) -> None:
         self._store.reset()
