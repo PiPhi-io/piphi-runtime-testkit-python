@@ -169,7 +169,7 @@ class MockCoreServer:
 
     def captured_telemetry_device_ids(self) -> list[Any]:
         return [
-            request.json_body.get("device_id")
+            request.json_body.get("device_id", request.json_body.get("deviceId"))
             for request in self.telemetry_requests
             if isinstance(request.json_body, dict)
         ]
@@ -179,10 +179,15 @@ class MockCoreServer:
         self._server.server_close()
         self._thread.join(timeout=2)
 
-    def assert_telemetry_sent(self, *, device_id: str | None = None) -> CapturedRequest:
+    def assert_telemetry_sent(
+        self,
+        *,
+        device_id: str | None = None,
+        config_id: str | None = None,
+    ) -> CapturedRequest:
         from .assertions import assert_telemetry_sent
 
-        return assert_telemetry_sent(self, device_id=device_id)
+        return assert_telemetry_sent(self, device_id=device_id, config_id=config_id)
 
     def assert_event_sent(
         self,

@@ -23,11 +23,33 @@ def make_request(path: str, json_body: dict) -> CapturedRequest:
 def test_assert_telemetry_sent_returns_matching_request():
     mock_core = MockCoreServer()
     try:
-        mock_core.telemetry_requests.append(make_request("/api/v2/integrations/telemetry", {"device_id": "plug-1"}))
+        mock_core.telemetry_requests.append(
+            make_request(
+                "/api/v2/integrations/telemetry",
+                {"device_id": "plug-1", "config_id": "config-1"},
+            )
+        )
 
-        request = assert_telemetry_sent(mock_core, device_id="plug-1")
+        request = assert_telemetry_sent(mock_core, device_id="plug-1", config_id="config-1")
 
         assert request.json_body["device_id"] == "plug-1"
+    finally:
+        mock_core.shutdown()
+
+
+def test_assert_telemetry_sent_matches_camel_case_payload():
+    mock_core = MockCoreServer()
+    try:
+        mock_core.telemetry_requests.append(
+            make_request(
+                "/api/v2/integrations/telemetry",
+                {"deviceId": "plug-2", "configId": "config-2"},
+            )
+        )
+
+        request = mock_core.assert_telemetry_sent(device_id="plug-2", config_id="config-2")
+
+        assert request.json_body["configId"] == "config-2"
     finally:
         mock_core.shutdown()
 

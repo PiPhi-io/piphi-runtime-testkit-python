@@ -79,10 +79,10 @@ def _find_request(
         if body_event_type is None and isinstance(body, dict):
             body_event_type = body.get("type")
         if device_id is not None:
-            if isinstance(body, dict) and body.get("device_id") != device_id:
+            if isinstance(body, dict) and _pick_alias(body, "device_id", "deviceId") != device_id:
                 continue
         if config_id is not None:
-            if isinstance(body, dict) and body.get("config_id") != config_id:
+            if isinstance(body, dict) and _pick_alias(body, "config_id", "configId") != config_id:
                 continue
         if event_type is not None:
             if body_event_type != event_type:
@@ -95,18 +95,23 @@ def assert_telemetry_sent(
     mock_core: MockCoreServer,
     *,
     device_id: str | None = None,
+    config_id: str | None = None,
 ) -> CapturedRequest:
     """Assert that at least one telemetry request was captured."""
 
     if not mock_core.telemetry_requests:
         raise AssertionError("Expected telemetry to be sent to mock Core, but no telemetry requests were captured.")
 
-    if device_id is None:
+    if device_id is None and config_id is None:
         return mock_core.telemetry_requests[-1]
 
-    request = _find_request(mock_core.telemetry_requests, device_id=device_id)
+    request = _find_request(mock_core.telemetry_requests, device_id=device_id, config_id=config_id)
     if request is None:
-        raise AssertionError(f"Expected telemetry for device_id={device_id!r}, but captured device_ids were {mock_core.captured_telemetry_device_ids()!r}.")
+        raise AssertionError(
+            "Expected telemetry matching filters, but none were captured. "
+            f"device_id={device_id!r} config_id={config_id!r} "
+            f"captured_device_ids={mock_core.captured_telemetry_device_ids()!r}"
+        )
     return request
 
 
