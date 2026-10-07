@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -203,4 +204,25 @@ class MockCoreServer:
             device_id=device_id,
             config_id=config_id,
             event_type=event_type,
+        )
+
+    def assert_behavior_conditions_match_telemetry(
+        self,
+        behaviors: Mapping[str, Any],
+        *,
+        dynamic_condition_ids: Iterable[str] = (),
+    ) -> None:
+        """Validate behaviors against telemetry captured by this mock Core."""
+
+        from .behavior_contract import assert_behavior_conditions_match_telemetry
+
+        samples = [
+            request.json_body
+            for request in self.telemetry_requests
+            if isinstance(request.json_body, dict)
+        ]
+        assert_behavior_conditions_match_telemetry(
+            behaviors,
+            samples,
+            dynamic_condition_ids=dynamic_condition_ids,
         )
