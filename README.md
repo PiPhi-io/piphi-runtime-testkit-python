@@ -47,6 +47,7 @@ It includes:
 - a local mock Core server that captures outbound HTTP requests
 - builder functions for runtime headers, `/config` payloads, and `/config/sync` snapshots
 - readable assertion helpers for telemetry and event delivery
+- a behavior/telemetry conformance gate that catches unusable automation conditions
 - a pytest plugin so the fixtures are available automatically
 
 It does not try to replace:
@@ -186,6 +187,27 @@ mock_core.assert_event_sent(config_id="sensor-1", event_type="device.configured"
 ```
 
 That makes the test much easier to understand at a glance.
+
+### Behavior and Telemetry Contract Gate
+
+After a representative runtime test has emitted telemetry, validate that every
+state-backed condition advertised by `behaviors.json` can read a real metric:
+
+```python
+import json
+from pathlib import Path
+
+
+def test_behavior_fields_match_runtime_telemetry(mock_core):
+    # Configure the runtime and wait for representative telemetry first.
+    behaviors = json.loads(Path("src/behaviors.json").read_text())
+    mock_core.assert_behavior_conditions_match_telemetry(behaviors)
+```
+
+The assertion checks condition fields, declared aliases, value types, and
+template conditions. Parameter-driven dynamic conditions must be named with
+`dynamic_condition_ids` and covered by a separate focused test; they are never
+silently skipped.
 
 ## Install
 
