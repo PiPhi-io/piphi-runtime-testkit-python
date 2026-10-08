@@ -5,6 +5,7 @@ import pytest
 from piphi_runtime_testkit_python.assertions import (
     assert_entities_response,
     assert_event_sent,
+    assert_state_refresh_response,
     assert_telemetry_sent,
 )
 from piphi_runtime_testkit_python.mock_core import CapturedRequest, MockCoreServer
@@ -200,3 +201,32 @@ def test_assert_entities_response_rejects_invalid_entity_shape():
         assert_entities_response(payload)
 
     assert "capabilities" in str(excinfo.value)
+
+
+def test_assert_state_refresh_response_requires_matching_upstream_receipt():
+    payload = {
+        "entries": {},
+        "refresh": {
+            "request_id": "refresh-1",
+            "performed": True,
+            "status": "refreshed",
+            "observed_at": "2026-10-08T15:00:00+00:00",
+            "source": "device",
+        },
+    }
+
+    assert assert_state_refresh_response(payload, request_id="refresh-1") is payload
+
+    with pytest.raises(AssertionError, match="current refresh request id"):
+        assert_state_refresh_response(payload, request_id="refresh-2")
+
+    cached = {
+        "entries": {},
+        "refresh": {
+            **payload["refresh"],
+            "performed": False,
+            "status": "unsupported",
+        },
+    }
+    with pytest.raises(AssertionError, match="upstream read"):
+        assert_state_refresh_response(cached, request_id="refresh-1")
