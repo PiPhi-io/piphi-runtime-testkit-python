@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any
 
 from .mock_core import CapturedRequest, MockCoreServer
@@ -165,4 +166,39 @@ def assert_entities_response(payload: Any) -> dict[str, Any]:
     if commands is not None and not isinstance(commands, dict):
         raise AssertionError(f"Expected /entities payload commands to be an object, but received {commands!r}.")
 
+    return payload
+
+
+def assert_state_refresh_response(
+    payload: Any,
+    *,
+    request_id: str,
+) -> dict[str, Any]:
+    """Assert that ``/state?refresh=true`` proves an upstream state read."""
+
+    if not isinstance(payload, dict):
+        raise AssertionError(
+            f"Expected refreshed /state payload to be an object, but received {payload!r}."
+        )
+    receipt = payload.get("refresh")
+    if not isinstance(receipt, dict):
+        raise AssertionError("Expected refreshed /state payload to include a refresh receipt.")
+    if receipt.get("request_id") != request_id:
+        raise AssertionError("Expected refresh receipt to echo the current refresh request id.")
+    if receipt.get("performed") is not True or receipt.get("status") != "refreshed":
+        raise AssertionError("Expected refresh receipt to confirm an upstream read.")
+    source = receipt.get("source")
+    if not isinstance(source, str) or not source.strip():
+        raise AssertionError("Expected refresh receipt to name its upstream source.")
+    observed_at = receipt.get("observed_at")
+    try:
+        parsed = datetime.fromisoformat(str(observed_at).replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise AssertionError(
+            "Expected refresh receipt to include a valid observation timestamp."
+        ) from exc
+    if parsed.tzinfo is None:
+        raise AssertionError(
+            "Expected refresh observation timestamp to include a timezone."
+        )
     return payload
