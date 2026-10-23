@@ -5,7 +5,6 @@ from __future__ import annotations
 from typing import Any
 from urllib.parse import urlsplit
 
-
 CAMERA_MEDIA_CONTRACT_VERSION = "camera.media.v1"
 PUBLIC_CAMERA_AUDIENCES = {"browser-core"}
 CAMERA_SECRET_FIELDS = {
@@ -97,7 +96,9 @@ def assert_public_camera_message_redacted(payload: Any) -> dict[str, Any]:
     """Assert that a browser-facing camera message contains no source secrets."""
 
     if not isinstance(payload, dict):
-        raise AssertionError(f"Expected camera message object, received {payload!r}.")
+        raise AssertionError(  # noqa: TRY004 - assertion helper intentionally raises AssertionError
+            f"Expected camera message object, received {payload!r}."
+        )
     if payload.get("contract_version") != CAMERA_MEDIA_CONTRACT_VERSION:
         raise AssertionError("Expected camera.media.v1 contract_version.")
     if payload.get("audience") not in PUBLIC_CAMERA_AUDIENCES:
@@ -116,16 +117,22 @@ def assert_camera_capability(
     """Assert that an entities response advertises a usable camera capability."""
 
     if not isinstance(entities_payload, dict):
-        raise AssertionError("Expected /entities payload to be an object.")
+        raise AssertionError(  # noqa: TRY004 - assertion helper intentionally raises AssertionError
+            "Expected /entities payload to be an object."
+        )
     capabilities = entities_payload.get("capabilities")
     if not isinstance(capabilities, dict):
-        raise AssertionError("Expected /entities capabilities to be an object.")
+        raise AssertionError(  # noqa: TRY004 - assertion helper intentionally raises AssertionError
+            "Expected /entities capabilities to be an object."
+        )
     capability = capabilities.get(capability_id)
     if not isinstance(capability, dict) or capability.get("kind") != "camera":
         raise AssertionError(f"Expected {capability_id!r} to be a camera capability.")
     camera = capability.get("camera")
     if not isinstance(camera, dict):
-        raise AssertionError(f"Expected {capability_id!r} to declare camera media endpoints.")
+        raise AssertionError(  # noqa: TRY004 - assertion helper intentionally raises AssertionError
+            f"Expected {capability_id!r} to declare camera media endpoints."
+        )
     endpoint_names = {
         "gateway_source_endpoint",
         "snapshot_endpoint",
@@ -141,4 +148,3 @@ def assert_camera_capability(
     ):
         raise AssertionError(f"Expected an entity to advertise {capability_id!r}.")
     return capability
-
