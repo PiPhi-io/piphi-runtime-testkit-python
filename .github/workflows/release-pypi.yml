@@ -32,6 +32,7 @@ on:
           - prerelease
           - release
           - custom
+          - current
       preid:
         description: Prerelease channel for pre* and prerelease actions
         required: true
@@ -95,7 +96,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if [[ "${{ inputs.release_type }}" == "custom" ]]; then
+          if [[ "${{ inputs.release_type }}" == "current" ]]; then
+            VERSION=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])")
+          elif [[ "${{ inputs.release_type }}" == "custom" ]]; then
             if [[ -z "${{ inputs.custom_version }}" ]]; then
               echo "custom_version is required when release_type=custom" >&2
               exit 1
@@ -209,11 +212,16 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python scripts/release.py --set-version "${{ needs.build.outputs.version }}"
+          CURRENT_VERSION=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml', 'rb'))['project']['version'])")
+          if [[ "$CURRENT_VERSION" != "${{ needs.build.outputs.version }}" ]]; then
+            python scripts/release.py --set-version "${{ needs.build.outputs.version }}"
+          fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add pyproject.toml
-          git commit -m "release: v${{ needs.build.outputs.version }}"
+          if ! git diff --cached --quiet; then
+            git commit -m "release: v${{ needs.build.outputs.version }}"
+          fi
           git tag "v${{ needs.build.outputs.version }}"
 
       - name: Push release commit and tag
