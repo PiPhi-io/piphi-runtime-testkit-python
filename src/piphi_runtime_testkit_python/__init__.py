@@ -2,6 +2,7 @@
 
 from .assertions import (
     assert_entities_response,
+    assert_onboarding_declaration,
     assert_event_sent,
     assert_state_refresh_response,
     assert_telemetry_sent,
@@ -34,6 +35,7 @@ __all__ = [
     "MockCoreServer",
     "RUNTIME_CONFIG_FETCH_PATH",
     "assert_entities_response",
+    "assert_onboarding_declaration",
     "assert_camera_capability",
     "assert_behavior_conditions_match_telemetry",
     "assert_event_sent",

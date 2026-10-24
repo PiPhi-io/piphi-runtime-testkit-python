@@ -5,6 +5,27 @@ from typing import Any
 
 from .mock_core import CapturedRequest, MockCoreServer
 
+ONBOARDING_MODES = frozenset({"manual", "discovery", "account", "service", "none"})
+
+
+def assert_onboarding_declaration(manifest: Any) -> dict[str, str]:
+    """Assert that a manifest uses the closed Core-owned onboarding contract."""
+
+    if not isinstance(manifest, dict):
+        raise AssertionError(f"Expected integration manifest to be an object, but received {manifest!r}.")
+    onboarding = manifest.get("onboarding")
+    if not isinstance(onboarding, dict):
+        raise AssertionError(f"Expected manifest.onboarding to be an object, but received {onboarding!r}.")
+    if set(onboarding) != {"mode"}:
+        raise AssertionError("Expected manifest.onboarding to contain only the Core-owned mode declaration.")
+    mode = onboarding.get("mode")
+    if mode not in ONBOARDING_MODES:
+        allowed = ", ".join(sorted(ONBOARDING_MODES))
+        raise AssertionError(
+            f"Expected manifest.onboarding.mode to be one of {allowed}, but received {mode!r}."
+        )
+    return onboarding
+
 
 def _pick_alias(mapping: dict[str, Any], *names: str) -> Any:
     for name in names:
