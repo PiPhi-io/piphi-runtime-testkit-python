@@ -4,6 +4,7 @@ import pytest
 
 from piphi_runtime_testkit_python.assertions import (
     assert_entities_response,
+    assert_onboarding_declaration,
     assert_event_sent,
     assert_state_refresh_response,
     assert_telemetry_sent,
@@ -19,6 +20,16 @@ def make_request(path: str, json_body: dict) -> CapturedRequest:
         body=b"",
         json_body=json_body,
     )
+
+
+def test_assert_onboarding_declaration_validates_closed_contract():
+    assert assert_onboarding_declaration({"onboarding": {"mode": "manual"}}) == {"mode": "manual"}
+    with pytest.raises(AssertionError, match="manifest.onboarding"):
+        assert_onboarding_declaration({})
+    with pytest.raises(AssertionError, match="one of"):
+        assert_onboarding_declaration({"onboarding": {"mode": "passive"}})
+    with pytest.raises(AssertionError, match="only the Core-owned mode"):
+        assert_onboarding_declaration({"onboarding": {"mode": "manual", "steps": []}})
 
 
 def test_assert_telemetry_sent_returns_matching_request():

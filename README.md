@@ -1,5 +1,16 @@
 # piphi-runtime-testkit-python
 
+Validate the closed, Core-owned onboarding declaration before publishing an
+integration manifest:
+
+```python
+from piphi_runtime_testkit_python import assert_onboarding_declaration
+
+assert_onboarding_declaration(manifest)
+```
+
+Supported modes are `manual`, `discovery`, `account`, `service`, and `none`.
+
 Pytest-first helpers for testing PiPhi runtime integrations.
 
 This package exists to make integration tests easier to write, easier to read,
